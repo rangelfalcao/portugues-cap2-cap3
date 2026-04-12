@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Estudos</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .container { background: white; border-radius: 20px; padding: 30px; max-width: 750px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  h1 { text-align: center; color: #4a4a8a; font-size: 26px; margin-bottom: 8px; }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; }
+
+  .header-bar { display: flex; justify-content: space-between; align-items: center; background: #f0f0ff; border-radius: 12px; padding: 12px 20px; margin-bottom: 24px; }
+  .timer { font-size: 22px; font-weight: bold; color: #4a4a8a; }
+  .timer.warning { color: #e74c3c; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .progress-info { font-size: 14px; color: #666; }
+  .score-info { font-size: 14px; color: #27ae60; font-weight: bold; }
+
+  .progress-bar { background: #eee; border-radius: 10px; height: 10px; margin-bottom: 24px; }
+  .progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 10px; height: 100%; transition: width 0.4s ease; }
+
+  .question-box { background: #fafafa; border-radius: 14px; padding: 22px; margin-bottom: 20px; border: 2px solid #e8e8f0; }
+  .question-type { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px; }
+  .question-text { font-size: 17px; color: #333; line-height: 1.5; font-weight: 500; }
+
+  .options { display: grid; gap: 10px; margin-top: 16px; }
+  .option-btn { background: white; border: 2px solid #ddd; border-radius: 10px; padding: 13px 16px; font-size: 15px; cursor: pointer; text-align: left; transition: all 0.2s; color: #333; }
+  .option-btn:hover:not(:disabled) { border-color: #667eea; background: #f0f0ff; transform: translateX(3px); }
+  .option-btn.correct { background: #d5f5e3; border-color: #27ae60; color: #1e8449; font-weight: bold; }
+  .option-btn.wrong { background: #fadbd8; border-color: #e74c3c; color: #922b21; }
+  .option-btn.reveal { background: #d5f5e3; border-color: #27ae60; color: #1e8449; }
+  .option-btn:disabled { cursor: default; }
+
+  .input-answer { width: 100%; padding: 12px 16px; border: 2px solid #ddd; border-radius: 10px; font-size: 15px; margin-top: 12px; outline: none; transition: border 0.2s; }
+  .input-answer:focus { border-color: #667eea; }
+  .input-answer.correct-input { border-color: #27ae60; background: #d5f5e3; }
+  .input-answer.wrong-input { border-color: #e74c3c; background: #fadbd8; }
+
+  .matching-area { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .match-item { padding: 10px 14px; background: white; border: 2px solid #ddd; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .match-item:hover:not(.matched):not(.wrong-match) { border-color: #667eea; background: #f0f0ff; }
+  .match-item.selected { border-color: #764ba2; background: #e8e0ff; font-weight: bold; }
+  .match-item.matched { border-color: #27ae60; background: #d5f5e3; cursor: default; }
+  .match-item.wrong-match { border-color: #e74c3c; background: #fadbd8; cursor: default; }
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+  .match-label { font-size: 12px; color: #888; font-weight: bold; text-align: center; margin-bottom: 4px; }
+
+  .ordering-area { margin-top: 14px; }
+  .order-item { background: white; border: 2px solid #ddd; border-radius: 10px; padding: 11px 16px; font-size: 14px; cursor: grab; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+  .order-item:hover { border-color: #667eea; background: #f0f0ff; }
+  .order-item.dragging { opacity: 0.5; border-style: dashed; }
+  .order-handle { color: #bbb; font-size: 16px; user-select: none; }
+
+  .fill-blank { margin-top: 12px; }
+  .blank-sentence { font-size: 16px; color: #444; line-height: 2; }
+  .blank-input { border: none; border-bottom: 2px solid #667eea; padding: 2px 8px; font-size: 15px; width: 120px; outline: none; background: transparent; color: #333; text-align: center; }
+  .blank-input.correct-blank { border-color: #27ae60; color: #27ae60; }
+  .blank-input.wrong-blank { border-color: #e74c3c; color: #e74c3c; }
+
+  .feedback { padding: 12px 16px; border-radius: 10px; margin-top: 14px; font-size: 14px; font-weight: 500; display: none; }
+  .feedback.correct { background: #d5f5e3; color: #1e8449; border-left: 4px solid #27ae60; }
+  .feedback.wrong { background: #fadbd8; color: #922b21; border-left: 4px solid #e74c3c; }
+
+  .btn { padding: 13px 28px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+  .btn-secondary { background: #f0f0ff; color: #4a4a8a; border: 2px solid #667eea; }
+  .btn-check { background: #27ae60; color: white; margin-top: 14px; width: 100%; border-radius: 10px; padding: 12px; font-size: 15px; }
+  .btn-check:hover { background: #229954; }
+
+  .nav-btns { display: flex; justify-content: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+  .start-screen, .result-screen { text-align: center; }
+  .start-screen .emoji { font-size: 60px; margin-bottom: 16px; }
+  .result-screen .emoji { font-size: 70px; margin-bottom: 16px; }
+  .result-grade { font-size: 60px; font-weight: bold; color: #4a4a8a; margin: 10px 0; }
+  .result-details { background: #f0f0ff; border-radius: 14px; padding: 20px; margin: 20px 0; text-align: left; }
+  .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; font-size: 15px; }
+  .result-row:last-child { border-bottom: none; font-weight: bold; }
+
+  .true-false-area { display: flex; gap: 14px; margin-top: 14px; }
+  .tf-btn { flex: 1; padding: 16px; border: 2px solid #ddd; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.2s; background: white; }
+  .tf-btn:hover:not(:disabled) { transform: scale(1.03); }
+  .tf-btn.verdadeiro:hover:not(:disabled) { border-color: #27ae60; background: #d5f5e3; color: #1e8449; }
+  .tf-btn.falso:hover:not(:disabled) { border-color: #e74c3c; background: #fadbd8; color: #922b21; }
+  .tf-btn.selected-true { border-color: #27ae60; background: #d5f5e3; color: #1e8449; }
+  .tf-btn.selected-false { border-color: #e74c3c; background: #fadbd8; color: #922b21; }
+
+  .complete-sentence { margin-top: 12px; }
+  .cs-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cs-word { padding: 8px 14px; border: 2px solid #ddd; border-radius: 20px; font-size: 14px; cursor: pointer; background: white; transition: all 0.2s; }
+  .cs-word:hover:not(.used) { border-color: #667eea; background: #f0f0ff; }
+  .cs-word.used { opacity: 0.4; cursor: default; }
+  .cs-target { border-bottom: 2px solid #667eea; padding: 2px 8px; min-width: 100px; display: inline-block; color: #333; font-weight: 500; }
+
+  @media(max-width: 500px) {
+    .container { padding: 18px; }
+    .matching-area { grid-template-columns: 1fr; }
+    .true-false-area { flex-direction: column; }
+    h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div id="start-screen" class="start-screen">
+  <div class="emoji">📚</div>
+  <h1>Quiz de Estudos</h1>
+  <p class="subtitle">Capítulos 2 e 3 — Língua Portuguesa</p>
+  <br>
+  <p style="color:#555;font-size:15px;margin-bottom:24px;line-height:1.6;">
+    Olá! Este quiz tem <strong>30 perguntas</strong> sobre o que você estudou.<br>
+    Você tem <strong>60 minutos</strong> para responder. Boa sorte! 🌟
+  </p>
+  <button class="btn btn-primary" onclick="startQuiz()">Começar o Quiz!</button>
+</div>
+
+<div id="quiz-screen" style="display:none;">
+  <div class="header-bar">
+    <div>
+      <div class="timer" id="timer-display">60:00</div>
+      <div style="font-size:11px;color:#888;margin-top:2px;">tempo restante</div>
+    </div>
+    <div style="text-align:center;">
+      <div class="progress-info" id="progress-text">Pergunta 1 de 30</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="score-info" id="score-display">✓ 0 certas</div>
+      <div style="font-size:11px;color:#888;margin-top:2px;">acertos</div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div id="question-area"></div>
+  <div class="nav-btns" id="nav-btns"></div>
+</div>
+
+<div id="result-screen" class="result-screen" style="display:none;"></div>
+
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  {
+    type: 'multiple',
+    question: 'No conto "Lado a lado, bem bolado", qual era o problema de Ricardinho?',
+    options: [
+      'Ele não sabia ler nem escrever.',
+      'Ele sempre confundia como escrever "em cima" e "embaixo".',
+      'Ele não conseguia aprender matemática.',
+      'Ele tinha dificuldade em falar com as pessoas.'
+    ],
+    correct: 1,
+    explanation: '"Em cima" se escreve separado e "embaixo" se escreve junto — e Ricardinho sempre se confundia!'
+  },
+  {
+    type: 'multiple',
+    question: 'Quem ajudou Ricardinho a resolver a confusão com "em cima" e "embaixo"?',
+    options: ['A professora da escola', 'A mãe dele', 'A Vovó', 'O amigo Adriano'],
+    correct: 2,
+    explanation: 'A Vovó era professora e sabia de tudo, tudinho mesmo!'
+  },
+  {
+    type: 'truefalse',
+    question: '"Em cima" se escreve junto (emcima) e "embaixo" se escreve separado (em baixo).',
+    correct: false,
+    explanation: 'É o contrário! "Em cima" = separado. "Embaixo" = junto.'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual truque a Vovó ensinou para lembrar como escrever "em cima" e "embaixo"?',
+    options: [
+      'Pensar na letra inicial das palavras.',
+      'Levantar a mão aberta: dedos em cima estão separados, embaixo estão juntos.',
+      'Escrever as duas palavras várias vezes.',
+      'Olhar no dicionário sempre que tiver dúvida.'
+    ],
+    correct: 1,
+    explanation: 'Com a mão aberta levantada, os dedos "em cima" estão separados e "embaixo" estão juntos — exatamente como se escreve!'
+  },
+  {
+    type: 'fillinblank',
+    question: 'Complete a frase: "Em cima" se escreve ________ e "embaixo" se escreve ________.',
+    blanks: ['separado', 'junto'],
+    display: 'Em cima se escreve ___ e embaixo se escreve ___.',
+    explanation: 'Essa é a regra fundamental do texto!'
+  },
+  {
+    type: 'multiple',
+    question: 'Por que o truque da Vovó não funcionava para Adriano?',
+    options: [
+      'Adriano já sabia escrever as palavras corretamente.',
+      'Adriano era canhoto e não sabia qual era a mão esquerda.',
+      'Adriano não gostava de levantar a mão.',
+      'Adriano não tinha mãos.'
+    ],
+    correct: 1,
+    explanation: 'Adriano era canhoto e ficaria com a mão ocupada para escrever!'
+  },
+  {
+    type: 'multiple',
+    question: 'O texto "Lado a lado, bem bolado" é um:',
+    options: ['Texto expositivo', 'Fábula', 'Conto', 'Poema'],
+    correct: 2,
+    explanation: 'O texto é um conto — uma narrativa fictícia com personagens, enredo, conflito e solução.'
+  },
+  {
+    type: 'multiple',
+    question: 'Na fábula "O rato e o touro", qual é a moral da história?',
+    options: [
+      'Os ratos são mais espertos que os touros.',
+      'Tamanho não é documento.',
+      'Nunca provoque animais maiores.',
+      'A força física sempre vence.'
+    ],
+    correct: 1,
+    explanation: 'A moral "tamanho não é documento" mostra que ser grande e forte não garante sempre a vitória!'
+  },
+  {
+    type: 'truefalse',
+    question: 'Na fábula "O rato e o touro", o touro conseguiu pegar o rato e venceu o conflito.',
+    correct: false,
+    explanation: 'O rato fugiu para seu buraco e o touro ficou sem conseguir fazer nada!'
+  },
+  {
+    type: 'multiple',
+    question: 'O que são textos narrativos?',
+    options: [
+      'Textos que expõem informações sobre um assunto.',
+      'Textos que contam uma história com personagens e acontecimentos.',
+      'Textos que ensinam como fazer algo.',
+      'Textos que convencem o leitor de uma opinião.'
+    ],
+    correct: 1,
+    explanation: 'Narrativas contam histórias — contos e fábulas são exemplos de textos narrativos!'
+  },
+  {
+    type: 'matching',
+    question: 'Relacione cada elemento da narrativa com sua definição:',
+    pairs: [
+      { left: 'Narrador', right: 'Quem conta a história' },
+      { left: 'Enredo', right: 'Sequência de acontecimentos' },
+      { left: 'Personagens', right: 'Quem realiza as ações' },
+      { left: 'Conflito', right: 'Problema que surge na história' }
+    ],
+    explanation: 'Esses são os elementos essenciais de qualquer texto narrativo!'
+  },
+  {
+    type: 'multiple',
+    question: 'O que é discurso direto?',
+    options: [
+      'Quando o narrador conta o que o personagem disse com suas próprias palavras.',
+      'Quando a fala do personagem aparece diretamente, usando travessão ou aspas.',
+      'Quando dois personagens conversam ao mesmo tempo.',
+      'Quando o narrador descreve o cenário da história.'
+    ],
+    correct: 1,
+    explanation: 'No discurso direto, ouvimos a voz do próprio personagem, marcada por travessão (—) ou aspas (" ").'
+  },
+  {
+    type: 'truefalse',
+    question: 'No discurso indireto, a fala do personagem é apresentada pelo narrador, sem travessão ou aspas.',
+    correct: true,
+    explanation: 'Exato! No discurso indireto, o narrador conta o que o personagem disse com suas próprias palavras.'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual alternativa usa corretamente "mas" ou "mais"?\n"O touro queria pegar o rato, _____ não conseguiu."',
+    options: ['mais', 'mas', 'más', 'mas\''],
+    correct: 1,
+    explanation: '"Mas" indica oposição (= porém). "Mais" indica quantidade (contrário de menos).'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual frase usa corretamente a palavra "mais"?',
+    options: [
+      'Eu queria ir, mais estava cansado.',
+      'Aquele foi o dia mais animado da semana.',
+      'Ela gosta de ler, mais prefere escrever.',
+      'Mais não fui ao parque ontem.'
+    ],
+    correct: 1,
+    explanation: '"Mais" indica quantidade ou intensidade — o contrário de "menos"!'
+  },
+  {
+    type: 'multiple',
+    question: 'No texto "De onde vem a energia?", qual é a principal fonte de energia do Brasil?',
+    options: [
+      'Energia nuclear',
+      'Combustíveis fósseis (petróleo e carvão)',
+      'Usinas hidrelétricas (energia da água)',
+      'Energia solar'
+    ],
+    correct: 2,
+    explanation: 'No Brasil, as usinas hidrelétricas são a principal forma de produção de energia!'
+  },
+  {
+    type: 'multiple',
+    question: 'Que porcentagem da energia elétrica mundial vem das usinas hidrelétricas?',
+    options: ['60%', '9%', '15%', '30%'],
+    correct: 2,
+    explanation: 'No mundo todo, cerca de 15% da energia elétrica vem das usinas hidrelétricas.'
+  },
+  {
+    type: 'truefalse',
+    question: 'As usinas hidrelétricas produzem energia sem nenhum impacto ao meio ambiente.',
+    correct: false,
+    explanation: 'Para construir represas, é preciso alagar áreas enormes, o que afeta animais, plantas e pessoas da região!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual problema é causado pela queima de combustíveis fósseis?',
+    options: [
+      'Produção de lixo nuclear radioativo.',
+      'Inundação de grandes áreas.',
+      'Liberação de gases tóxicos que causam efeito estufa e chuva ácida.',
+      'Falta de água nos rios.'
+    ],
+    correct: 2,
+    explanation: 'A queima de petróleo, carvão e outros combustíveis libera gases que poluem o ar e causam vários problemas ambientais!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual é o problema das usinas nucleares?',
+    options: [
+      'Usam muita água.',
+      'Geram lixo nuclear altamente radioativo.',
+      'Precisam de muito vento para funcionar.',
+      'São muito baratas para construir.'
+    ],
+    correct: 1,
+    explanation: 'O lixo nuclear é muito perigoso — pode causar câncer e mutações, e precisa ser isolado com muito cuidado!'
+  },
+  {
+    type: 'multiple',
+    question: 'Por que a energia solar e a energia eólica são chamadas de "fontes alternativas"?',
+    options: [
+      'São mais caras que as outras fontes de energia.',
+      'São poluentes, mas menos que o petróleo.',
+      'Não poluem o ar e são praticamente infinitas.',
+      'São usadas apenas em países pobres.'
+    ],
+    correct: 2,
+    explanation: 'Energia do sol e do vento não poluem e são fontes que nunca vão acabar!'
+  },
+  {
+    type: 'multiple',
+    question: 'O texto "De onde vem a energia?" é um:',
+    options: ['Conto', 'Fábula', 'Texto expositivo', 'Poema'],
+    correct: 2,
+    explanation: 'Textos expositivos expõem informações detalhadas sobre um assunto específico.'
+  },
+  {
+    type: 'multiple',
+    question: 'O que são pronomes pessoais?',
+    options: [
+      'Palavras que indicam posse (meu, minha, seu, sua).',
+      'Palavras que substituem os substantivos para evitar repetições.',
+      'Palavras que indicam posição no espaço.',
+      'Palavras que ligam orações.'
+    ],
+    correct: 1,
+    explanation: 'Pronomes pessoais como eu, ele, nós, elas substituem os nomes das pessoas e coisas!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual é a função dos pronomes possessivos?',
+    options: [
+      'Substituir verbos na frase.',
+      'Indicar a posição de objetos no espaço.',
+      'Indicar que algo pertence a alguém (posse).',
+      'Ligar duas frases diferentes.'
+    ],
+    correct: 2,
+    explanation: 'Meu, minha, seu, sua, nosso, nossa — todos indicam que algo pertence a alguém!'
+  },
+  {
+    type: 'matching',
+    question: 'Relacione o pronome demonstrativo com o que ele indica:',
+    pairs: [
+      { left: 'Este / Esta', right: 'Próximo de quem fala' },
+      { left: 'Esse / Essa', right: 'Próximo de quem ouve' },
+      { left: 'Aquele / Aquela', right: 'Distante dos dois' }
+    ],
+    explanation: 'Os pronomes demonstrativos indicam a posição dos objetos em relação a quem fala!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual pronome demonstrativo completa corretamente: "_____ livro aqui é meu."?',
+    options: ['Esse', 'Aquele', 'Este', 'Aquela'],
+    correct: 2,
+    explanation: '"Este" indica algo próximo de quem fala — "aqui" confirma que está perto!'
+  },
+  {
+    type: 'truefalse',
+    question: 'A fábula "O rato e o touro" é de autoria de Esopo.',
+    correct: true,
+    explanation: 'Sim! A fábula foi escrita por Esopo e publicada no livro "Fábulas de Esopo".'
+  },
+  {
+    type: 'multiple',
+    question: 'No texto "Por que a gente se alimenta?", de onde vem a energia para nosso corpo funcionar?',
+    options: [
+      'Do sol, assim como as plantas.',
+      'Do alimento que comemos.',
+      'Do ar que respiramos.',
+      'Da água que bebemos.'
+    ],
+    correct: 1,
+    explanation: 'Nossas células precisam de alimento para se dividir, crescer e se comunicar!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual é a diferença entre um conto e uma fábula?',
+    options: [
+      'Contos têm animais como personagens; fábulas têm pessoas.',
+      'Contos são histórias reais; fábulas são inventadas.',
+      'Fábulas geralmente têm uma moral ao final; contos são histórias fictícias em geral.',
+      'Não há diferença, são a mesma coisa.'
+    ],
+    correct: 2,
+    explanation: 'A fábula sempre termina com uma lição (moral). O conto é uma narrativa fictícia mais geral!'
+  },
+  {
+    type: 'multiple',
+    question: 'Qual frase está no discurso direto?',
+    options: [
+      'A Vovó disse que era fácil aprender.',
+      'Ricardinho falou que estava com dúvida.',
+      '— É fácil, Ricardinho — ensinou a Vovó.',
+      'A professora explicou que as células precisam de alimento.'
+    ],
+    correct: 2,
+    explanation: 'O travessão (—) marca o início do discurso direto — a fala do próprio personagem!'
+  },
+  {
+    type: 'multiple',
+    question: 'Complete com a opção correta: "Francisco conversou _____ com os colegas, _____ não conseguiu matar a saudade."',
+    options: ['mais / mas', 'mas / mais', 'mais / mais', 'mas / mas'],
+    correct: 0,
+    explanation: '"mais" = quantidade/intensidade; "mas" = oposição (porém). As duas palavras têm usos diferentes!'
+  }
+];
+
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let answered = [];
+let timerInterval;
+let timeLeft = 3600;
+let matchState = {};
+let quizStarted = false;
+
+function shuffle(arr) {
+  let a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  questions = shuffle(ALL_QUESTIONS).slice(0, 30);
+  answered = new Array(questions.length).fill(null);
+  currentQ = 0;
+  score = 0;
+  timeLeft = 3600;
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  timerInterval = setInterval(updateTimer, 1000);
+  renderQuestion();
+}
+
+function updateTimer() {
+  timeLeft--;
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    showResult();
+    return;
+  }
+  let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  let s = (timeLeft % 60).toString().padStart(2, '0');
+  let el = document.getElementById('timer-display');
+  el.textContent = m + ':' + s;
+  if (timeLeft < 300) el.classList.add('warning');
+}
+
+function renderQuestion() {
+  let q = questions[currentQ];
+  let pct = ((currentQ) / questions.length * 100).toFixed(0);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = 'Pergunta ' + (currentQ + 1) + ' de ' + questions.length;
+  document.getElementById('score-display').textContent = '✓ ' + score + ' certas';
+  let area = document.getElementById('question-area');
+  area.innerHTML = '';
+  let box = document.createElement('div');
+  box.className = 'question-box';
+  let typeLabel = {
+    multiple: 'Múltipla escolha', truefalse: 'Verdadeiro ou Falso',
+    matching: 'Relacionar colunas', fillinblank: 'Preencher lacuna',
+    ordering: 'Ordenar', complete: 'Completar com palavras'
+  }[q.type] || q.type;
+  box.innerHTML = '<div class="question-type">' + typeLabel + '</div><div class="question-text">' + q.question.replace(/\n/g,'<br>') + '</div>';
+  area.appendChild(box);
+  let inputArea = document.createElement('div');
+  if (q.type === 'multiple') renderMultiple(q, inputArea);
+  else if (q.type === 'truefalse') renderTrueFalse(q, inputArea);
+  else if (q.type === 'matching') renderMatching(q, inputArea);
+  else if (q.type === 'fillinblank') renderFillBlank(q, inputArea);
+  area.appendChild(inputArea);
+  let fb = document.createElement('div');
+  fb.className = 'feedback';
+  fb.id = 'feedback';
+  area.appendChild(fb);
+  if (answered[currentQ] !== null) restoreAnswer(q, inputArea);
+  renderNav();
+}
+
+function renderMultiple(q, area) {
+  let opts = document.createElement('div');
+  opts.className = 'options';
+  q.options.forEach((opt, i) => {
+    let btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectOption(i, q, opts);
+    opts.appendChild(btn);
+  });
+  area.appendChild(opts);
+}
+
+function selectOption(idx, q, opts) {
+  if (answered[currentQ] !== null) return;
+  let btns = opts.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  let isCorrect = idx === q.correct;
+  btns[idx].classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) btns[q.correct].classList.add('reveal');
+  answered[currentQ] = isCorrect;
+  if (isCorrect) score++;
+  showFeedback(isCorrect, q.explanation);
+  document.getElementById('score-display').textContent = '✓ ' + score + ' certas';
+  renderNav();
+}
+
+function renderTrueFalse(q, area) {
+  let wrap = document.createElement('div');
+  wrap.className = 'true-false-area';
+  let tv = document.createElement('button');
+  tv.className = 'tf-btn verdadeiro';
+  tv.innerHTML = '✅ Verdadeiro';
+  tv.onclick = () => selectTF(true, q, tv, tf);
+  let tf = document.createElement('button');
+  tf.className = 'tf-btn falso';
+  tf.innerHTML = '❌ Falso';
+  tf.onclick = () => selectTF(false, q, tv, tf);
+  wrap.appendChild(tv);
+  wrap.appendChild(tf);
+  area.appendChild(wrap);
+}
+
+function selectTF(val, q, tvBtn, tfBtn) {
+  if (answered[currentQ] !== null) return;
+  let isCorrect = val === q.correct;
+  tvBtn.disabled = true; tfBtn.disabled = true;
+  if (val) { tvBtn.classList.add(isCorrect ? 'selected-true' : 'selected-false'); }
+  else { tfBtn.classList.add(isCorrect ? 'selected-true' : 'selected-false'); }
+  answered[currentQ] = isCorrect;
+  if (isCorrect) score++;
+  showFeedback(isCorrect, q.explanation);
+  document.getElementById('score-display').textContent = '✓ ' + score + ' certas';
+  renderNav();
+}
+
+function renderMatching(q, area) {
+  matchState = { selected: null, matched: [], wrongs: [], pairs: q.pairs };
+  let wrap = document.createElement('div');
+  wrap.className = 'matching-area';
+  let leftCol = document.createElement('div');
+  leftCol.className = 'match-col';
+  leftCol.innerHTML = '<div class="match-label">Coluna A</div>';
+  let rightCol = document.createElement('div');
+  rightCol.className = 'match-col';
+  rightCol.innerHTML = '<div class="match-label">Coluna B</div>';
+  let rights = shuffle(q.pairs.map(p => p.right));
+  q.pairs.forEach((pair, i) => {
+    let lItem = document.createElement('div');
+    lItem.className = 'match-item';
+    lItem.textContent = pair.left;
+    lItem.dataset.side = 'left';
+    lItem.dataset.idx = i;
+    lItem.onclick = () => handleMatch(lItem, 'left', i, area, q);
+    leftCol.appendChild(lItem);
+  });
+  rights.forEach((r, i) => {
+    let rItem = document.createElement('div');
+    rItem.className = 'match-item';
+    rItem.textContent = r;
+    rItem.dataset.side = 'right';
+    rItem.dataset.val = r;
+    rItem.onclick = () => handleMatch(rItem, 'right', r, area, q);
+    rightCol.appendChild(rItem);
+  });
+  wrap.appendChild(leftCol);
+  wrap.appendChild(rightCol);
+  area.appendChild(wrap);
+}
+
+function handleMatch(el, side, id, area, q) {
+  if (answered[currentQ] !== null) return;
+  if (el.classList.contains('matched') || el.classList.contains('wrong-match')) return;
+  if (!matchState.selected) {
+    if (side === 'left') {
+      document.querySelectorAll('.match-item').forEach(m => m.classList.remove('selected'));
+      el.classList.add('selected');
+      matchState.selected = { el, side: 'left', idx: id };
+    }
+  } else if (matchState.selected.side === 'left' && side === 'right') {
+    let lIdx = matchState.selected.idx;
+    let correct = q.pairs[lIdx].right === id;
+    if (correct) {
+      matchState.selected.el.classList.remove('selected');
+      matchState.selected.el.classList.add('matched');
+      el.classList.add('matched');
+      matchState.matched.push(lIdx);
+      if (matchState.matched.length === q.pairs.length) {
+        answered[currentQ] = true;
+        score++;
+        showFeedback(true, q.explanation);
+        document.getElementById('score-display').textContent = '✓ ' + score + ' certas';
+        renderNav();
+      }
+    } else {
+      matchState.selected.el.classList.remove('selected');
+      matchState.selected.el.classList.add('wrong-match');
+      el.classList.add('wrong-match');
+      setTimeout(() => {
+        matchState.selected.el.classList.remove('wrong-match');
+        el.classList.remove('wrong-match');
+      }, 800);
+    }
+    matchState.selected = null;
+  } else {
+    document.querySelectorAll('.match-item').forEach(m => m.classList.remove('selected'));
+    if (side === 'left') { el.classList.add('selected'); matchState.selected = { el, side: 'left', idx: id }; }
+    else { matchState.selected = null; }
+  }
+}
+
+function renderFillBlank(q, area) {
+  let wrap = document.createElement('div');
+  wrap.className = 'fill-blank';
+  let parts = q.display.split('___');
+  let html = '<div class="blank-sentence">';
+  parts.forEach((p, i) => {
+    html += p;
+    if (i < parts.length - 1) html += '<input class="blank-input" data-idx="' + i + '" placeholder="..." />';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+  area.appendChild(wrap);
+  let btn = document.createElement('button');
+  btn.className = 'btn btn-check';
+  btn.textContent = 'Verificar Resposta';
+  btn.onclick = () => checkFillBlank(q, area, btn);
+  area.appendChild(btn);
+}
+
+function checkFillBlank(q, area, btn) {
+  if (answered[currentQ] !== null) return;
+  let inputs = area.querySelectorAll('.blank-input');
+  let allCorrect = true;
+  inputs.forEach((inp, i) => {
+    let val = inp.value.trim().toLowerCase();
+    let expected = q.blanks[i].toLowerCase();
+    if (val === expected || val.includes(expected) || expected.includes(val)) {
+      inp.classList.add('correct-blank');
+    } else {
+      inp.classList.add('wrong-blank');
+      inp.placeholder = q.blanks[i];
+      allCorrect = false;
+    }
+    inp.disabled = true;
+  });
+  btn.disabled = true;
+  answered[currentQ] = allCorrect;
+  if (allCorrect) score++;
+  showFeedback(allCorrect, q.explanation);
+  document.getElementById('score-display').textContent = '✓ ' + score + ' certas';
+  renderNav();
+}
+
+function showFeedback(correct, explanation) {
+  let fb = document.getElementById('feedback');
+  if (!fb) return;
+  fb.className = 'feedback ' + (correct ? 'correct' : 'wrong');
+  fb.innerHTML = (correct ? '🎉 Correto! ' : '❌ Não foi dessa vez. ') + explanation;
+  fb.style.display = 'block';
+}
+
+function restoreAnswer(q, area) {
+  let isCorrect = answered[currentQ];
+  showFeedback(isCorrect, q.explanation);
+  if (q.type === 'multiple') {
+    let btns = area.querySelectorAll('.option-btn');
+    btns.forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === q.correct) btn.classList.add(isCorrect ? 'correct' : 'reveal');
+    });
+  }
+}
+
+function renderNav() {
+  let nav = document.getElementById('nav-btns');
+  nav.innerHTML = '';
+  if (currentQ > 0) {
+    let prev = document.createElement('button');
+    prev.className = 'btn btn-secondary';
+    prev.textContent = '← Anterior';
+    prev.onclick = () => { currentQ--; renderQuestion(); };
+    nav.appendChild(prev);
+  }
+  if (currentQ < questions.length - 1) {
+    let next = document.createElement('button');
+    next.className = 'btn btn-primary';
+    next.textContent = 'Próxima →';
+    next.onclick = () => { currentQ++; renderQuestion(); };
+    nav.appendChild(next);
+    if (answered[currentQ] === null && questions[currentQ + 1]) {
+      next.style.opacity = '0.6';
+    }
+  } else {
+    let fin = document.createElement('button');
+    fin.className = 'btn btn-primary';
+    fin.innerHTML = '🏁 Ver Resultado';
+    fin.onclick = () => { clearInterval(timerInterval); showResult(); };
+    nav.appendChild(fin);
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  let rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+  let total = questions.length;
+  let pct = Math.round(score / total * 100);
+  let nota = pct >= 90 ? '10' : pct >= 80 ? '9' : pct >= 70 ? '8' : pct >= 60 ? '7' : pct >= 50 ? '6' : pct >= 40 ? '5' : '4';
+  let emoji = pct >= 70 ? '🌟' : pct >= 50 ? '😊' : '💪';
+  let msg = pct >= 90 ? 'Incrível! Você é uma campeã!' : pct >= 70 ? 'Muito bem! Continue assim!' : pct >= 50 ? 'Bom esforço! Revise um pouco mais.' : 'Continue estudando, você consegue!';
+  let tmUsed = 3600 - timeLeft;
+  let tm = Math.floor(tmUsed / 60) + 'm ' + (tmUsed % 60) + 's';
+  let erros = answered.filter(a => a === false).length;
+  let skip = answered.filter(a => a === null).length;
+  rs.innerHTML = `
+    <div class="emoji">${emoji}</div>
+    <h1>${msg}</h1>
+    <div class="result-grade">${nota}</div>
+    <p style="color:#888;font-size:14px;">nota estimada</p>
+    <div class="result-details">
+      <div class="result-row"><span>✅ Respostas corretas:</span><span style="color:#27ae60;font-weight:bold;">${score}</span></div>
+      <div class="result-row"><span>❌ Respostas erradas:</span><span style="color:#e74c3c;">${erros}</span></div>
+      <div class="result-row"><span>⏭ Não respondidas:</span><span style="color:#888;">${skip}</span></div>
+      <div class="result-row"><span>⏱ Tempo utilizado:</span><span>${tm}</span></div>
+      <div class="result-row"><span>📊 Aproveitamento:</span><span style="color:#4a4a8a;font-weight:bold;">${pct}%</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="location.reload()" style="margin-top:10px;">🔄 Tentar Novamente</button>
+  `;
+}
+</script>
+</body>
+</html>
