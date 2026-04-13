@@ -153,6 +153,32 @@
   }
   .btn-video { display: none; }
 
+  .video-chamada {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+    border-left: 5px solid #667eea;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 0 auto 14px auto;
+    max-width: 480px;
+    text-align: left;
+  }
+  .video-chamada-icone { font-size: 2rem; flex-shrink: 0; margin-top: 2px; }
+  .video-chamada-titulo {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #4a3f9f;
+    margin-bottom: 5px;
+  }
+  .video-chamada-sub {
+    font-size: 0.88rem;
+    color: #555;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
   /* === QUIZ === */
   #quizScreen { display: none; }
 
@@ -572,6 +598,13 @@
       <div class="info-card">
         <span class="icon">🌟</span>
         Nota de 0 a 10!
+      </div>
+    </div>
+    <div class="video-chamada">
+      <span class="video-chamada-icone">🎬</span>
+      <div>
+        <p class="video-chamada-titulo">Antes de começar, que tal dar uma turbinada nos estudos?</p>
+        <p class="video-chamada-sub">Preparamos um vídeo especial para te ajudar a revisar o conteúdo e chegar voando no simulado. Aprender pode ser muito divertido — é só dar o play! 🚀✨</p>
       </div>
     </div>
     <a class="video-destaque" href="https://youtu.be/0rHM92Z5foo" target="_blank">
