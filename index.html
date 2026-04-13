@@ -112,33 +112,46 @@
   }
 
   .video-destaque {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    position: relative;
+    display: block;
     border-radius: 20px;
-    padding: 18px 24px;
+    overflow: hidden;
     margin: 0 auto 28px auto;
     max-width: 480px;
-    box-shadow: 0 6px 20px rgba(255,0,0,0.3);
-    text-align: left;
-  }
-  .video-destaque .video-icon { font-size: 2.8rem; flex-shrink: 0; }
-  .video-destaque .video-texto { color: white; font-size: 0.95rem; line-height: 1.5; }
-  .video-destaque .video-texto strong { font-size: 1.05rem; display: block; margin-bottom: 4px; }
-  .btn-video {
-    display: inline-block;
-    margin-top: 8px;
-    background: white;
-    color: #cc0000;
-    font-weight: 900;
-    font-size: 0.9rem;
-    padding: 8px 18px;
-    border-radius: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    cursor: pointer;
     text-decoration: none;
-    transition: transform 0.2s;
   }
-  .btn-video:hover { transform: scale(1.05); }
+  .video-destaque img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    transition: transform 0.3s;
+  }
+  .video-destaque:hover img { transform: scale(1.03); }
+  .video-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 0, 0, 0.92);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    transition: transform 0.2s, background 0.2s;
+    padding-left: 5px;
+  }
+  .video-destaque:hover .video-play-btn {
+    transform: translate(-50%, -50%) scale(1.15);
+    background: rgba(200, 0, 0, 1);
+  }
+  .btn-video { display: none; }
 
   /* === QUIZ === */
   #quizScreen { display: none; }
@@ -561,16 +574,10 @@
         Nota de 0 a 10!
       </div>
     </div>
-    <div class="video-destaque">
-      <div class="video-icon">▶️</div>
-      <div class="video-texto">
-        <strong>🎬 Assista antes de começar!</strong>
-        Canal: <strong>Play na Prova</strong><br>
-        Revise o conteúdo no vídeo e vai arrasar no simulado! 💪
-        <br>
-        <a class="btn-video" href="https://youtu.be/0rHM92Z5foo" target="_blank">▶ Assistir no YouTube</a>
-      </div>
-    </div>
+    <a class="video-destaque" href="https://youtu.be/0rHM92Z5foo" target="_blank">
+      <img src="90757893-ca66-4a45-bbdb-74951a0e0564.jpg" alt="Assista ao vídeo antes de começar - Play na Prova">
+      <div class="video-play-btn">▶</div>
+    </a>
     <button class="btn-start" onclick="startQuiz()">🚀 Começar o Simulado!</button>
   </div>
 
