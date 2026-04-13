@@ -111,6 +111,35 @@
     animation: none;
   }
 
+  .video-destaque {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    border-radius: 20px;
+    padding: 18px 24px;
+    margin: 0 auto 28px auto;
+    max-width: 480px;
+    box-shadow: 0 6px 20px rgba(255,0,0,0.3);
+    text-align: left;
+  }
+  .video-destaque .video-icon { font-size: 2.8rem; flex-shrink: 0; }
+  .video-destaque .video-texto { color: white; font-size: 0.95rem; line-height: 1.5; }
+  .video-destaque .video-texto strong { font-size: 1.05rem; display: block; margin-bottom: 4px; }
+  .btn-video {
+    display: inline-block;
+    margin-top: 8px;
+    background: white;
+    color: #cc0000;
+    font-weight: 900;
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+  .btn-video:hover { transform: scale(1.05); }
+
   /* === QUIZ === */
   #quizScreen { display: none; }
 
@@ -530,6 +559,16 @@
       <div class="info-card">
         <span class="icon">🌟</span>
         Nota de 0 a 10!
+      </div>
+    </div>
+    <div class="video-destaque">
+      <div class="video-icon">▶️</div>
+      <div class="video-texto">
+        <strong>🎬 Assista antes de começar!</strong>
+        Canal: <strong>Play na Prova</strong><br>
+        Revise o conteúdo no vídeo e vai arrasar no simulado! 💪
+        <br>
+        <a class="btn-video" href="https://youtu.be/0rHM92Z5foo" target="_blank">▶ Assistir no YouTube</a>
       </div>
     </div>
     <button class="btn-start" onclick="startQuiz()">🚀 Começar o Simulado!</button>
